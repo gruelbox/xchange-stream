@@ -208,6 +208,7 @@ public class ExecutionReportBinanceUserTransaction extends ProductBinanceWebSock
                orderPrice,
                orderQuantity,
                cumulativeFilledQuantity,
+               cumulativeQuoteAssetTransactedQuantity,
                currentOrderStatus,
                timeInForce,
                orderType,
