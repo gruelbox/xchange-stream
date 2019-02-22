@@ -2,10 +2,10 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>info.bitrich.xchange-stream</groupId>
+    <groupId>com.gruelbox</groupId>
     <artifactId>xchange-stream-parent</artifactId>
     <packaging>pom</packaging>
-    <version>4.3.16-SNAPSHOT</version>
+    <version>4.3.16.1-SNAPSHOT</version>
 
     <modules>
         <module>xchange-stream-core</module>
@@ -31,10 +31,10 @@
     </modules>
 
     <name>xchange-stream</name>
-    <description>
-        XChange-stream is a Java library providing a simple and consistent streaming API for interacting with Bitcoin
-        and other crypto currency exchanges via WebSocket protocol.
-    </description>
+    <description>This is the public fork of xchange-stream used by Orko. It is usually the development
+    branch of xchange-stream plus some urgent fixes. Those fixes will be or will have already been
+    submitted to xchange-stream as pull requests, but will not have been reviewed yet. It is not
+    advised for other projects to track or use this fork. Please use the main project.</description>
     <url>https://github.com/bitrich-info/xchange-stream</url>
 
     <licenses>
@@ -53,9 +53,9 @@
     </developers>
 
     <scm>
-        <connection>scm:git:git@github.com:bitrich-info/xchange-stream.git</connection>
-        <developerConnection>scm:git:git@github.com:bitrich-info/xchange-stream.git</developerConnection>
-        <url>git@github.com:bitrich-info/xchange-stream.git</url>
+        <connection>scm:git:git@github.com:gruelbox/xchange-stream.git</connection>
+        <developerConnection>scm:git:git@github.com:gruelbox/xchange-stream.git</developerConnection>
+        <url>git@github.com:gruelbox/xchange-stream.git</url>
         <tag>HEAD</tag>
     </scm>
 
@@ -80,7 +80,7 @@
     </repositories>
 
     <properties>
-        <xchange.version>4.3.15</xchange.version>
+        <xchange.version>4.3.16-SNAPSHOT</xchange.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>1.8</maven.compiler.source>
@@ -156,71 +156,85 @@
         </plugins>
     </build>
     <profiles>
-        <profile>
-            <id>release</id>
-            <build>
-                <plugins>
-                    <plugin>
-                        <groupId>org.sonatype.plugins</groupId>
-                        <artifactId>nexus-staging-maven-plugin</artifactId>
-                        <version>1.6.3</version>
-                        <extensions>true</extensions>
-                        <configuration>
-                            <serverId>ossrh</serverId>
-                            <nexusUrl>https://oss.sonatype.org/</nexusUrl>
-                            <autoReleaseAfterClose>true</autoReleaseAfterClose>
-                        </configuration>
-                    </plugin>
+		<profile>
+			<id>release</id>
+			<properties>
+				<gpg.executable>gpg2</gpg.executable>
+ 			</properties>
+			<activation>
+				<property>
+					<name>performRelease</name>
+					<value>true</value>
+				</property>
+			</activation>
+			<build>
+				<plugins>
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-gpg-plugin</artifactId>
+						<version>1.6</version>
+						<executions>
+							<execution>
+								<id>sign-artifacts</id>
+								<phase>verify</phase>
+								<goals>
+									<goal>sign</goal>
+								</goals>
+								<configuration>
+									<keyname>${gpg.keyname}</keyname>
+									<passphraseServerId>${gpg.keyname}</passphraseServerId>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
 
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-source-plugin</artifactId>
-                        <version>2.4</version>
-                        <executions>
-                            <execution>
-                                <id>attach-sources</id>
-                                <goals>
-                                    <goal>jar-no-fork</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
+					<!-- Generates a source code JAR during package -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-source-plugin</artifactId>
+						<version>3.0.1</version>
+						<executions>
+							<execution>
+								<id>attach-sources</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+					<!-- Generates JavaDocs during package -->
+					<plugin>
+						<groupId>org.apache.maven.plugins</groupId>
+						<artifactId>maven-javadoc-plugin</artifactId>
+						<version>3.0.1</version>
+						<executions>
+							<execution>
+								<id>attach-javadocs</id>
+								<goals>
+									<goal>jar</goal>
+								</goals>
+								<configuration>
+									<doclint>none</doclint>
+								</configuration>
+							</execution>
+						</executions>
+					</plugin>
+					
+					<!-- Auto release from OSSRH staging -->
+					<plugin>
+						<groupId>org.sonatype.plugins</groupId>
+						<artifactId>nexus-staging-maven-plugin</artifactId>
+						<version>1.6.8</version>
+						<extensions>true</extensions>
+						<configuration>
+							<serverId>ossrh</serverId>
+							<nexusUrl>https://oss.sonatype.org/</nexusUrl>
+							<autoReleaseAfterClose>true</autoReleaseAfterClose>
+						</configuration>
+					</plugin>
 
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-javadoc-plugin</artifactId>
-                        <version>2.10.3</version>
-                        <executions>
-                            <execution>
-                                <id>attach-javadocs</id>
-                                <goals>
-                                    <goal>jar</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>org.apache.maven.plugins</groupId>
-                        <artifactId>maven-gpg-plugin</artifactId>
-                        <version>1.6</version>
-                        <executions>
-                            <execution>
-                                <id>sign-artifacts</id>
-                                <phase>verify</phase>
-                                <goals>
-                                    <goal>sign</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                        <configuration>
-                            <gpgArguments>
-                                <arg>--no-tty</arg>
-                            </gpgArguments>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
+				</plugins>
+			</build>
+		</profile>
     </profiles>
 </project>
