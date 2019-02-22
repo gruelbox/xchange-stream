@@ -1,15 +1,16 @@
 package info.bitrich.xchangestream.coinbasepro.dto;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 import org.knowm.xchange.coinbasepro.dto.account.CoinbaseProWebsocketAuthData;
 import org.knowm.xchange.currency.CurrencyPair;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Stream;
 
 import info.bitrich.xchangestream.core.ProductSubscription;
 
@@ -113,8 +114,17 @@ public class CoinbaseProWebSocketSubscriptionMessage {
         pairs.put("level2", productSubscription.getOrderBook());
         pairs.put("ticker", productSubscription.getTicker());
         pairs.put("matches", productSubscription.getTrades());
-        if ( authData != null )
-            pairs.put("user", productSubscription.getTrades());
+        if ( authData != null ) {
+            ArrayList<CurrencyPair> userCurrencies = new ArrayList<>();
+            Stream.of(
+                    productSubscription.getUserTrades().stream(),
+                    productSubscription.getOrders().stream()
+                )
+                .flatMap(s -> s)
+                .distinct()
+                .forEach(userCurrencies::add);
+            pairs.put("user", userCurrencies);
+        }
 
         for (Map.Entry<String, List<CurrencyPair>> product : pairs.entrySet()) {
             List<CurrencyPair> currencyPairs = product.getValue();

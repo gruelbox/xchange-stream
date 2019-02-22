@@ -3,7 +3,6 @@ package info.bitrich.xchangestream.binance;
 import info.bitrich.xchangestream.binance.BinanceUserDataChannel.NoActiveChannelException;
 import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
-import info.bitrich.xchangestream.core.StreamingMarketDataService;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -30,7 +29,11 @@ public class BinanceStreamingExchange extends BinanceExchange implements Streami
 
     private BinanceStreamingService streamingService;
     private BinanceUserDataStreamingService userDataStreamingService;
+
     private BinanceStreamingMarketDataService streamingMarketDataService;
+    private BinanceStreamingAccountService streamingAccountService;
+    private BinanceStreamingTradeService streamingTradeService;
+
     private BinanceUserDataChannel userDataChannel;
 
     public BinanceStreamingExchange() {
@@ -76,10 +79,15 @@ public class BinanceStreamingExchange extends BinanceExchange implements Streami
             }
         }
 
-        streamingMarketDataService = new BinanceStreamingMarketDataService(streamingService, (BinanceMarketDataService) marketDataService, userDataStreamingService);
+        streamingMarketDataService = new BinanceStreamingMarketDataService(streamingService, (BinanceMarketDataService) marketDataService);
+        streamingAccountService = new BinanceStreamingAccountService(userDataStreamingService);
+        streamingTradeService = new BinanceStreamingTradeService(userDataStreamingService);
+
 
         return Completable.concat(completables)
-            .doOnComplete(() -> streamingMarketDataService.openSubscriptions(subscriptions));
+            .doOnComplete(() -> streamingMarketDataService.openSubscriptions(subscriptions))
+            .doOnComplete(() -> streamingAccountService.openSubscriptions())
+            .doOnComplete(() -> streamingTradeService.openSubscriptions());
     }
 
     private Completable createAndConnectUserDataService(String listenKey) {
@@ -87,9 +95,12 @@ public class BinanceStreamingExchange extends BinanceExchange implements Streami
         return userDataStreamingService.connect().doOnComplete(() -> {
             LOG.info("Connected to authenticated web socket");
             userDataChannel.onChangeListenKey(newListenKey -> {
-                userDataStreamingService.disconnect().blockingAwait();
-                createAndConnectUserDataService(newListenKey).blockingAwait();
-                streamingMarketDataService.setUserDataStreamingService(userDataStreamingService);
+                userDataStreamingService.disconnect().doOnComplete(() -> {
+                    createAndConnectUserDataService(newListenKey).doOnComplete(() -> {
+                        streamingAccountService.setUserDataStreamingService(userDataStreamingService);
+                        streamingTradeService.setUserDataStreamingService(userDataStreamingService);
+                    });
+                });
             });
         });
     }
@@ -127,8 +138,18 @@ public class BinanceStreamingExchange extends BinanceExchange implements Streami
     }
 
     @Override
-    public StreamingMarketDataService getStreamingMarketDataService() {
+    public BinanceStreamingMarketDataService getStreamingMarketDataService() {
         return streamingMarketDataService;
+    }
+
+    @Override
+    public BinanceStreamingAccountService getStreamingAccountService() {
+        return streamingAccountService;
+    }
+
+    @Override
+    public BinanceStreamingTradeService getStreamingTradeService() {
+        return streamingTradeService;
     }
 
     private BinanceStreamingService createStreamingService(ProductSubscription subscription) {
