@@ -30,7 +30,7 @@
         <module>xchange-hitbtc</module>
     </modules>
 
-    <name>xchange-stream</name>
+    <name>Orko xchange-stream Fork</name>
     <description>This is the public fork of xchange-stream used by Orko. It is usually the development
     branch of xchange-stream plus some urgent fixes. Those fixes will be or will have already been
     submitted to xchange-stream as pull requests, but will not have been reviewed yet. It is not
