@@ -93,7 +93,7 @@ public class WebSocketClientHandler extends SimpleChannelInboundHandler<Object> 
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        LOG.error("WebSocket client encountered exception. Closing", cause);
+        LOG.error("WebSocket client encountered exception ({} - {}). Closing", cause.getClass().getSimpleName(), cause.getMessage());
         if (!handshakeFuture.isDone()) {
             handshakeFuture.setFailure(cause);
         }
