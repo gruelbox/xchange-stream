@@ -3,6 +3,7 @@ package info.bitrich.xchangestream.binance;
 import info.bitrich.xchangestream.binance.BinanceUserDataChannel.NoActiveChannelException;
 import info.bitrich.xchangestream.core.ProductSubscription;
 import info.bitrich.xchangestream.core.StreamingExchange;
+import info.bitrich.xchangestream.util.Events;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -11,8 +12,10 @@ import si.mazi.rescu.RestProxyFactory;
 
 import org.knowm.xchange.binance.BinanceAuthenticated;
 import org.knowm.xchange.binance.BinanceExchange;
+import org.knowm.xchange.binance.service.BinanceAccountService;
 import org.knowm.xchange.binance.service.BinanceMarketDataService;
 import org.knowm.xchange.currency.CurrencyPair;
+import org.knowm.xchange.exceptions.ExchangeSecurityException;
 import org.knowm.xchange.service.BaseExchangeService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -35,8 +38,12 @@ public class BinanceStreamingExchange extends BinanceExchange implements Streami
     private BinanceStreamingTradeService streamingTradeService;
 
     private BinanceUserDataChannel userDataChannel;
+    private Runnable onApiCall;
 
-    public BinanceStreamingExchange() {
+    @Override
+    protected void initServices() {
+        super.initServices();
+        this.onApiCall = Events.onApiCall(exchangeSpecification);
     }
 
     /**
@@ -60,18 +67,21 @@ public class BinanceStreamingExchange extends BinanceExchange implements Streami
 
         List<Completable> completables = new ArrayList<>();
 
-        if (!subscriptions.isEmpty()) {
+        if (subscriptions.hasUnauthenticated()) {
             completables.add(streamingService.connect());
         }
 
-        if (exchangeSpecification.getApiKey() != null) {
+        if (subscriptions.hasAuthenticated()) {
+            if (exchangeSpecification.getApiKey() == null) {
+                throw new ExchangeSecurityException("Cannot subscribe to authenticated streams without API key");
+            }
             LOG.info("Connecting to authenticated web socket");
             BinanceAuthenticated binance = RestProxyFactory.createProxy(
                 BinanceAuthenticated.class,
                 getExchangeSpecification().getSslUri(),
                 new BaseExchangeService<BinanceExchange>(this) {}.getClientConfig()
             );
-            userDataChannel = new BinanceUserDataChannel(binance, exchangeSpecification.getApiKey());
+            userDataChannel = new BinanceUserDataChannel(binance, exchangeSpecification.getApiKey(), onApiCall);
             try {
                 completables.add(createAndConnectUserDataService(userDataChannel.getListenKey()));
             } catch (NoActiveChannelException e) {
@@ -79,14 +89,13 @@ public class BinanceStreamingExchange extends BinanceExchange implements Streami
             }
         }
 
-        streamingMarketDataService = new BinanceStreamingMarketDataService(streamingService, (BinanceMarketDataService) marketDataService);
-        streamingAccountService = new BinanceStreamingAccountService(userDataStreamingService);
+        streamingMarketDataService = new BinanceStreamingMarketDataService(streamingService, (BinanceMarketDataService) marketDataService, onApiCall);
+        streamingAccountService = new BinanceStreamingAccountService(userDataStreamingService, (BinanceAccountService) accountService, onApiCall);
         streamingTradeService = new BinanceStreamingTradeService(userDataStreamingService);
-
 
         return Completable.concat(completables)
             .doOnComplete(() -> streamingMarketDataService.openSubscriptions(subscriptions))
-            .doOnComplete(() -> streamingAccountService.openSubscriptions())
+            .doOnComplete(() -> streamingAccountService.openSubscriptions(subscriptions))
             .doOnComplete(() -> streamingTradeService.openSubscriptions());
     }
 
