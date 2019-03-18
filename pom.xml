@@ -14,20 +14,26 @@
         <module>service-netty</module>
         <module>service-wamp</module>
         <module>service-core</module>
+<!--
         <module>xchange-bitstamp</module>
         <module>xchange-cexio</module>
         <module>xchange-okcoin</module>
         <module>xchange-poloniex</module>
         <module>xchange-coinmate</module>
+-->
         <module>xchange-coinbasepro</module>
         <module>xchange-bitfinex</module>
         <module>xchange-bitmex</module>
+<!--
         <module>xchange-poloniex2</module>
         <module>xchange-bitflyer</module>
         <module>xchange-gemini</module>
         <module>xchange-wex</module>
+-->    
         <module>xchange-binance</module>
+<!--
         <module>xchange-hitbtc</module>
+-->
     </modules>
 
     <name>Orko xchange-stream Fork</name>
