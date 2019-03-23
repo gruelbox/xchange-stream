@@ -54,22 +54,14 @@ public class ProductSubscription {
 
     public List<CurrencyPair> getUserTrades() {
         return userTrades;
-    }
+      }
 
     public List<Currency> getBalances() {
         return balances;
-    }
+      }
 
     public boolean isEmpty() {
-      return !hasAuthenticated() && !hasUnauthenticated();
-    }
-
-    public boolean hasAuthenticated() {
-        return !orders.isEmpty() || !userTrades.isEmpty() || !balances.isEmpty();
-    }
-
-    public boolean hasUnauthenticated() {
-        return !ticker.isEmpty() || !trades.isEmpty() || !orderBook.isEmpty();
+      return ticker.isEmpty() && trades.isEmpty() && orderBook.isEmpty() && orders.isEmpty() && userTrades.isEmpty() && balances.isEmpty();
     }
 
     public static ProductSubscriptionBuilder create() {
