@@ -9,6 +9,9 @@
 
     <artifactId>xchange-stream-bitmex</artifactId>
 
+    <name>Orko xchange-stream fork - Bitmex</name>
+    <description>Development fork. Not for general use.</description>
+
     <dependencies>
         <dependency>
             <groupId>com.gruelbox</groupId>

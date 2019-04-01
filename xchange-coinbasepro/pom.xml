@@ -9,6 +9,9 @@
 
     <artifactId>xchange-stream-coinbasepro</artifactId>
 
+    <name>Orko xchange-stream fork - Coinbase Pro</name>
+    <description>Development fork. Not for general use.</description>
+
     <dependencies>
         <dependency>
             <groupId>com.gruelbox</groupId>

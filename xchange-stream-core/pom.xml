@@ -9,6 +9,9 @@
 
     <artifactId>xchange-stream-core</artifactId>
 
+    <name>Orko xchange-stream fork - Core</name>
+    <description>Development fork. Not for general use.</description>
+
     <dependencies>
         <dependency>
             <groupId>com.gruelbox</groupId>

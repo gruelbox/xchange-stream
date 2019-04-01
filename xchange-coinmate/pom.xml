@@ -9,6 +9,9 @@
 
     <artifactId>xchange-stream-coinmate</artifactId>
 
+    <name>Orko xchange-stream fork - CoinMate</name>
+    <description>Development fork. Not for general use.</description>
+
     <dependencies>
         <dependency>
             <groupId>com.gruelbox</groupId>

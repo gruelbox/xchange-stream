@@ -9,6 +9,9 @@
 
     <artifactId>xchange-stream-poloniex</artifactId>
 
+    <name>Orko xchange-stream fork - Poloniex</name>
+    <description>Development fork. Not for general use.</description>
+
     <dependencies>
         <dependency>
             <groupId>com.gruelbox</groupId>

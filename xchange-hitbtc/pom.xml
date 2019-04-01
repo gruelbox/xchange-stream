@@ -9,6 +9,9 @@
 
     <artifactId>xchange-stream-hitbtc</artifactId>
 
+    <name>Orko xchange-stream fork - HitBTC</name>
+    <description>Development fork. Not for general use.</description>
+
     <dependencies>
         <dependency>
             <groupId>com.gruelbox</groupId>

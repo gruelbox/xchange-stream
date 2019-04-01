@@ -9,6 +9,9 @@
 
     <artifactId>xchange-stream-bitstamp</artifactId>
 
+    <name>Orko xchange-stream fork - Bitstamp</name>
+    <description>Development fork. Not for general use.</description>
+
     <dependencies>
         <dependency>
             <groupId>com.gruelbox</groupId>
