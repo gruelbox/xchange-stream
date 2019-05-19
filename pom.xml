@@ -80,7 +80,7 @@
         <!-- For XChange SNAPSHOT dependency -->
         <repository>
             <id>sonatype-oss-snapshot</id>
-            <snapshots />
+            <snapshots/>
             <url>https://oss.sonatype.org/content/repositories/snapshots</url>
         </repository>
     </repositories>
@@ -98,7 +98,7 @@
             <dependency>
                 <groupId>com.fasterxml.jackson.core</groupId>
                 <artifactId>jackson-databind</artifactId>
-                <version>2.9.8</version>
+                <version>2.9.9</version>
             </dependency>
         </dependencies>
     </dependencyManagement>
