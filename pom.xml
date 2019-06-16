@@ -5,7 +5,7 @@
     <groupId>com.gruelbox</groupId>
     <artifactId>xchange-stream-parent</artifactId>
     <packaging>pom</packaging>
-    <version>4.3.16.3-SNAPSHOT</version>
+    <version>4.3.16.3</version>
 
     <modules>
         <module>xchange-stream-core</module>
@@ -62,7 +62,7 @@
         <connection>scm:git:git@github.com:gruelbox/xchange-stream.git</connection>
         <developerConnection>scm:git:git@github.com:gruelbox/xchange-stream.git</developerConnection>
         <url>git@github.com:gruelbox/xchange-stream.git</url>
-        <tag>HEAD</tag>
+        <tag>4.3.16.3</tag>
     </scm>
 
     <distributionManagement>
