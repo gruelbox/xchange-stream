@@ -60,6 +60,30 @@ public interface StreamingExchange extends Exchange {
     }
 
     /**
+     * Returns service that can be used to access market data.
+     * Observable for disconnection event.
+     *
+     * @return Observable with the exception during reconnection.
+     */
+    default Observable<ChannelHandlerContext> disconnectObservable() {
+        throw new NotYetImplementedForExchangeException();
+    }
+
+    /**
+     * Observable for message delay measure.
+     * Every time when the client received a message with a timestamp, the delay time is calculated and pushed to subscribers.
+     *
+     * @return Observable with the message delay measure.
+     */
+    default Observable<Long> messageDelay() {
+        throw new NotYetImplementedForExchangeException();
+    }
+
+    default void resubscribeChannels() {
+        throw new NotYetImplementedForExchangeException();
+    }
+
+    /**
      * Returns service that can be used to access streaming market data.
      */
     StreamingMarketDataService getStreamingMarketDataService();
