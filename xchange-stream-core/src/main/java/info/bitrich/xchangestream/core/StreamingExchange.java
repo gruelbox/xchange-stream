@@ -2,7 +2,7 @@ package info.bitrich.xchangestream.core;
 
 import info.bitrich.xchangestream.service.ConnectableService;
 import info.bitrich.xchangestream.service.netty.NettyStreamingService;
-
+import io.netty.channel.ChannelHandlerContext;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 
