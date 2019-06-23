@@ -1,11 +1,5 @@
 package info.bitrich.xchangestream.service.netty;
 
-import info.bitrich.xchangestream.service.ConnectableService;
-import info.bitrich.xchangestream.service.exception.NotConnectedException;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -14,10 +8,14 @@ import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import info.bitrich.xchangestream.service.ConnectableService;
+import info.bitrich.xchangestream.service.exception.NotConnectedException;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
@@ -37,9 +35,9 @@ import io.netty.handler.codec.http.websocketx.TextWebSocketFrame;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshaker;
 import io.netty.handler.codec.http.websocketx.WebSocketClientHandshakerFactory;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
-import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.WebSocketVersion;
 import io.netty.handler.codec.http.websocketx.extensions.WebSocketClientExtensionHandler;
+import io.netty.handler.codec.http.websocketx.WebSocketHandshakeException;
 import io.netty.handler.codec.http.websocketx.extensions.compression.WebSocketClientCompressionHandler;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
@@ -78,7 +76,7 @@ public abstract class NettyStreamingService<T> extends ConnectableService {
     private Duration retryDuration;
     private Duration connectionTimeout;
     private volatile NioEventLoopGroup eventLoopGroup;
-    protected final Map<String, Subscription> channels = new ConcurrentHashMap<>();
+    protected Map<String, Subscription> channels = new ConcurrentHashMap<>();
     private boolean compressedMessages = false;
     private final List<ObservableEmitter<Throwable>> reconnFailEmitters = new LinkedList<>();
     private final List<ObservableEmitter<Object>> connectionSuccessEmitters = new LinkedList<>();
@@ -227,19 +225,15 @@ public abstract class NettyStreamingService<T> extends ConnectableService {
 
     protected void handleError(CompletableEmitter completable, Throwable t) {
         isManualDisconnect = true;
-        if (webSocketChannel != null) {
-            webSocketChannel.disconnect().addListener(f -> {
-                if(f.isSuccess()) {
-                    isManualDisconnect = false;
-                }
-                shutdownEventLoopGroup(() -> {
-                    LOG.info("Disconnected");
-                    completable.onError(t);
-                });
-            });
-        } else if (eventLoopGroup != null) {
-            shutdownEventLoopGroup(() -> completable.onError(t));
-        }
+        ChannelFuture disconnect = webSocketChannel.disconnect();
+        disconnect.addListener(f -> {
+            if(f.isSuccess()) {
+                isManualDisconnect = false;
+            }
+            // shutdown sockets after disconnect for avoiding sockets leak
+            eventLoopGroup.shutdownGracefully(2, 30, TimeUnit.SECONDS);
+        });
+        completable.onError(t);
     }
 
     protected DefaultHttpHeaders getCustomHeaders() {
@@ -250,29 +244,19 @@ public abstract class NettyStreamingService<T> extends ConnectableService {
         isManualDisconnect = true;
         connectedSuccessfully = false;
         return Completable.create(completable -> {
-            if (webSocketChannel != null && webSocketChannel.isOpen()) {
+            if (webSocketChannel.isOpen()) {
                 CloseWebSocketFrame closeFrame = new CloseWebSocketFrame();
                 webSocketChannel.writeAndFlush(closeFrame).addListener(future -> {
-                    channels.clear();
-                    shutdownEventLoopGroup(() -> {
-                        LOG.info("Disconnected");
-                        completable.onComplete();
+                    channels = new ConcurrentHashMap<>();
+                    eventLoopGroup.shutdownGracefully(2, 30, TimeUnit.SECONDS).addListener(f -> {
+                      LOG.info("Disconnected");
+                      completable.onComplete();
                     });
                 });
             } else {
-                LOG.warn("Disconnect called but already disconnected");
-                if (eventLoopGroup != null) {
-                    shutdownEventLoopGroup(() -> completable.onComplete());
-                } else {
-                    completable.onComplete();
-                }
+              LOG.warn("Disconnect called but already disconnected");
+              completable.onComplete();
             }
-        });
-    }
-
-    private void shutdownEventLoopGroup(Runnable onComplete) {
-        eventLoopGroup.shutdownGracefully(2, 30, TimeUnit.SECONDS).addListener(f -> {
-            onComplete.run();
         });
     }
 
@@ -328,27 +312,28 @@ public abstract class NettyStreamingService<T> extends ConnectableService {
             if (webSocketChannel == null || !webSocketChannel.isOpen()) {
                 e.onError(new NotConnectedException());
             }
-            channels.computeIfAbsent(channelId, chanId -> {
+
+            if (!channels.containsKey(channelId)) {
                 Subscription newSubscription = new Subscription(e, channelName, args);
+                channels.put(channelId, newSubscription);
                 try {
                     sendMessage(getSubscribeMessage(channelName, args));
                 } catch (IOException throwable) {
                     e.onError(throwable);
                 }
-                return newSubscription;
-            });
+            }
         }).doOnDispose(() -> {
-            if (channels.remove(channelId) != null) {
+            if (channels.containsKey(channelId)) {
                 sendMessage(getUnsubscribeMessage(channelId));
+                channels.remove(channelId);
             }
         }).share();
     }
 
     public void resubscribeChannels() {
-        for (Entry<String, Subscription> entry : channels.entrySet()) {
-            String channelId = entry.getKey();
-            Subscription subscription = entry.getValue();
+        for (String channelId : channels.keySet()) {
             try {
+                Subscription subscription = channels.get(channelId);
                 sendMessage(getSubscribeMessage(subscription.channelName, subscription.args));
             } catch (IOException e) {
                 LOG.error("Failed to reconnect channel: {}", channelId);
@@ -357,12 +342,14 @@ public abstract class NettyStreamingService<T> extends ConnectableService {
     }
 
     protected String getChannel(T message) {
+        String channel;
         try {
-            return getChannelNameFromMessage(message);
+            channel = getChannelNameFromMessage(message);
         } catch (IOException e) {
-            LOG.error("Cannot parse channel from message: " + message, e);
+            LOG.error("Cannot parse channel from message: {}", message);
             return "";
         }
+        return channel;
     }
 
     protected void handleMessage(T message) {
@@ -387,9 +374,7 @@ public abstract class NettyStreamingService<T> extends ConnectableService {
             LOG.debug("No subscriber for channel {}.", channel);
             return;
         }
-        if (LOG.isDebugEnabled()) {
-            LOG.debug("Emitting message on channel {}: {}", channel, message);
-        }
+
         emitter.onNext(message);
     }
 
@@ -430,7 +415,7 @@ public abstract class NettyStreamingService<T> extends ConnectableService {
                 super.channelInactive(ctx);
                 if (connectedSuccessfully) {
                     LOG.info("Reopening websocket because it was closed by the host");
-                    shutdownEventLoopGroup(() -> connect().subscribe());
+                    eventLoopGroup.shutdownGracefully(2, 30, TimeUnit.SECONDS).addListener(f -> connect().subscribe());
                 }
             }
         }
