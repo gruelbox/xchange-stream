@@ -14,9 +14,6 @@ import org.knowm.xchange.exceptions.ExchangeSecurityException;
 
 import java.util.function.Function;
 
-/**
- * Created by Lukas Zaoralek on 7.11.17.
- */
 public class BitfinexStreamingTradeService implements StreamingTradeService {
 
     private final BitfinexStreamingService service;

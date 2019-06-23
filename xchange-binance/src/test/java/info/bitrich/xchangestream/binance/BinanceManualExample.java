@@ -70,7 +70,7 @@ public class BinanceManualExample {
                 .subscribe(trade -> LOG.info("User trade: {}", trade));
             balances = exchange.getStreamingAccountService()
                 .getBalanceChanges()
-                .subscribe(trade -> LOG.info("Balance: {}", trade));
+                .subscribe(trade -> LOG.info("Balance: {}", trade), e -> LOG.error("Error in balance stream", e));
 
             // Level 2 (exchange-specific) APIs
             executionReports = exchange.getStreamingTradeService()

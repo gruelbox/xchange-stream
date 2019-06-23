@@ -1,13 +1,5 @@
 package info.bitrich.xchangestream.coinbasepro.dto;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProProductBook;
-import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProProductStats;
-import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProProductTicker;
-import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProTrade;
-import org.knowm.xchange.coinbasepro.dto.trade.CoinbaseProFill;
-
 import java.math.BigDecimal;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -16,6 +8,14 @@ import java.util.List;
 import java.util.Map;
 import java.util.SortedMap;
 import java.util.TimeZone;
+
+import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProProductBook;
+import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProProductStats;
+import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProProductTicker;
+import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProTrade;
+import org.knowm.xchange.coinbasepro.dto.trade.CoinbaseProFill;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * Domain object mapping a CoinbasePro web socket message.

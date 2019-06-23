@@ -36,16 +36,21 @@ public class BinanceStreamingAccountService implements StreamingAccountService  
     }
 
     public Observable<OutboundAccountInfoBinanceWebsocketTransaction> getRawAccountInfo() {
-        if (binanceUserDataStreamingService == null || !binanceUserDataStreamingService.isSocketOpen())
-            throw new ExchangeSecurityException("Not authenticated");
+        checkConnected();
         return accountInfoPublisher;
     }
 
     public Observable<Balance> getBalanceChanges() {
+        checkConnected();
         return getRawAccountInfo()
                 .map(OutboundAccountInfoBinanceWebsocketTransaction::getBalances)
                 .flatMap((List<BinanceWebsocketBalance> balances) -> Observable.fromIterable(balances))
                 .map(BinanceWebsocketBalance::toBalance);
+    }
+
+    private void checkConnected() {
+        if (binanceUserDataStreamingService == null || !binanceUserDataStreamingService.isSocketOpen())
+            throw new ExchangeSecurityException("Not authenticated");
     }
 
     @Override

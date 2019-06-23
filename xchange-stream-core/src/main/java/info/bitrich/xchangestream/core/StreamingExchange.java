@@ -5,7 +5,6 @@ import info.bitrich.xchangestream.service.netty.NettyStreamingService;
 import io.netty.channel.ChannelHandlerContext;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-
 import org.knowm.xchange.Exchange;
 import org.knowm.xchange.ExchangeSpecification;
 import org.knowm.xchange.exceptions.NotYetImplementedForExchangeException;
@@ -60,7 +59,6 @@ public interface StreamingExchange extends Exchange {
     }
 
     /**
-     * Returns service that can be used to access market data.
      * Observable for disconnection event.
      *
      * @return Observable with the exception during reconnection.
