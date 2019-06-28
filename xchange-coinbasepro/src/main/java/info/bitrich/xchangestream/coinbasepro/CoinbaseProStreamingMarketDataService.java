@@ -1,6 +1,5 @@
 package info.bitrich.xchangestream.coinbasepro;
 
-import static org.knowm.xchange.coinbasepro.CoinbaseProAdapters.adaptOrderBook;
 import static org.knowm.xchange.coinbasepro.CoinbaseProAdapters.adaptTicker;
 import static org.knowm.xchange.coinbasepro.CoinbaseProAdapters.adaptTrades;
 
@@ -11,7 +10,6 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProProductBook;
 import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProProductTicker;
 import org.knowm.xchange.coinbasepro.dto.marketdata.CoinbaseProTrade;
 import org.knowm.xchange.currency.CurrencyPair;
@@ -19,8 +17,6 @@ import org.knowm.xchange.dto.marketdata.OrderBook;
 import org.knowm.xchange.dto.marketdata.Ticker;
 import org.knowm.xchange.dto.marketdata.Trade;
 import org.knowm.xchange.dto.marketdata.Trades;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import info.bitrich.xchangestream.coinbasepro.dto.CoinbaseProWebSocketTransaction;
 import info.bitrich.xchangestream.core.StreamingMarketDataService;
@@ -67,8 +63,11 @@ public class CoinbaseProStreamingMarketDataService implements StreamingMarketDat
                         bids.put(currencyPair, new TreeMap<>(java.util.Collections.reverseOrder()));
                         asks.put(currencyPair, new TreeMap<>());
                     }
-                    CoinbaseProProductBook productBook = s.toCoinbaseProProductBook(bids.get(currencyPair), asks.get(currencyPair), maxDepth);
-                    return adaptOrderBook(productBook, currencyPair);
+                    return s.toOrderBook(
+                        bids.get(currencyPair),
+                        asks.get(currencyPair),
+                        maxDepth,
+                        currencyPair);
                 });
     }
 
